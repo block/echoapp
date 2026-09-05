@@ -1,0 +1,55 @@
+// Repository URLs are resolved by name rather than written as literals here, so this file pins
+// no specific registry host. The public Maven URLs in this build's `gradle.properties`
+// (`mavenRepo*`) are the defaults; a build may redirect resolution to a private mirror by
+// exporting the matching `ECHOAPP_GRADLE_REPO_*` environment variable,
+// without editing this file and without that host ever appearing in this tree. `mavenRepo`
+// prefers the env var, then the Gradle property; a blank value from either source is treated as
+// unset, and a clear error is raised if neither provides a URL. It is a block-local closure
+// because Gradle evaluates `pluginManagement {}` in isolation and can't see top-level helpers.
+pluginManagement {
+  def mavenRepo = { String envVar, String propKey ->
+    def value = providers.environmentVariable(envVar).orNull?.trim() ?:
+        providers.gradleProperty(propKey).orNull?.trim()
+    if (!value) {
+      throw new GradleException(
+          "Set the $envVar environment variable or the $propKey Gradle property to a Maven repository URL")
+    }
+    value
+  }
+  repositories {
+    maven { url mavenRepo('ECHOAPP_GRADLE_REPO_ANDROID', 'mavenRepoAndroid') }
+    maven { url mavenRepo('ECHOAPP_GRADLE_REPO_GOOGLE', 'mavenRepoGoogle') }
+    maven { url mavenRepo('ECHOAPP_GRADLE_REPO_PLUGINS', 'mavenRepoPlugins') }
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  def mavenRepo = { String envVar, String propKey ->
+    def value = providers.environmentVariable(envVar).orNull?.trim() ?:
+        providers.gradleProperty(propKey).orNull?.trim()
+    if (!value) {
+      throw new GradleException(
+          "Set the $envVar environment variable or the $propKey Gradle property to a Maven repository URL")
+    }
+    value
+  }
+  repositories {
+    maven { url mavenRepo('ECHOAPP_GRADLE_REPO_ANDROID', 'mavenRepoAndroid') }
+    maven { url mavenRepo('ECHOAPP_GRADLE_REPO_GOOGLE', 'mavenRepoGoogle') }
+    // com.squareup.moshix:sealed-swift-compat-codegen is not published to a public repository
+    // yet, so this build cannot resolve it off-VPN until moshix ships it publicly. Until then,
+    // point echoapp.extraMavenUrl (e.g. in ~/.gradle/gradle.properties) or the
+    // ECHOAPP_EXTRA_MAVEN_URL environment variable at a mirror that hosts it. Defaults to unset.
+    def extraMavenUrl = providers.environmentVariable('ECHOAPP_EXTRA_MAVEN_URL').orNull?.trim() ?:
+        providers.gradleProperty('echoapp.extraMavenUrl').orNull?.trim()
+    if (extraMavenUrl) {
+      maven { url extraMavenUrl }
+    }
+  }
+}
+
+rootProject.name = "echo-android"
+include ':sample'
+include ':client'
+include ':plugin-api'

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>id</key>
+	<string>com.echo.plugin.keyvaluestore</string>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>category</key>
+	<integer>1</integer>
+	<key>displayName</key>
+	<string>Key Value Store</string>
+	<key>sfSymbolName</key>
+	<string>tablecells</string>
+	<key>description</key>
+	<string>View and edit key-value stores like UserDefaults, SharedPreferences, and custom stores.</string>
+	<key>orgId</key>
+	<string>com.echo.plugin</string>
+	<key>orgDisplayName</key>
+	<string>Echo Team</string>
+</dict>
+</plist>

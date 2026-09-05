@@ -1,0 +1,69 @@
+plugins {
+  alias(libs.plugins.androidApplication)
+  alias(libs.plugins.ktfmt)
+  alias(libs.plugins.compose.compiler)
+}
+
+android {
+  namespace 'xyz.block.echoapp.sample'
+  compileSdk 36
+
+  defaultConfig {
+    applicationId "xyz.block.echoapp.sample"
+    minSdk 26
+    targetSdk 34
+    versionCode 1
+    versionName "1.0"
+
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    vectorDrawables {
+      useSupportLibrary true
+    }
+  }
+
+  buildTypes {
+    debug
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+  buildFeatures {
+    compose true
+    buildConfig = true
+  }
+
+  packaging {
+    resources {
+      excludes += '/META-INF/{AL2.0,LGPL2.1}'
+    }
+  }
+}
+
+dependencies {
+  implementation libs.core.ktx
+  implementation libs.coroutines.core
+  implementation libs.appcompat
+  implementation libs.material
+  implementation libs.lifecycle.runtime.ktx
+  implementation libs.okhttp
+  implementation libs.activity.compose
+  implementation platform(libs.compose.bom)
+  implementation libs.timber
+  implementation libs.ui
+  implementation libs.ui.graphics
+  implementation libs.ui.tooling.preview
+  implementation libs.material3
+
+  implementation project(':client')
+
+  testImplementation libs.junit
+  androidTestImplementation platform(libs.compose.bom)
+  androidTestImplementation libs.ui.test.junit4
+  debugImplementation libs.ui.tooling
+  debugImplementation libs.ui.test.manifest
+}

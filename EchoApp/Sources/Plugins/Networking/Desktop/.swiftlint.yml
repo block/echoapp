@@ -1,0 +1,5 @@
+disabled_rules:
+    - multiple_closures_with_trailing_closure
+    - line_length
+    - swiftui_implicit_padding
+    - swiftui_implicit_stack_spacing

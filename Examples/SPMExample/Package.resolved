@@ -1,0 +1,51 @@
+{
+  "originHash" : "1d846d093124b4cd37a02aa61660aa25ed046798e2c9c707c2d0eab8a4739145",
+  "pins" : [
+    {
+      "identity" : "accessibilitysnapshot",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cashapp/AccessibilitySnapshot",
+      "state" : {
+        "revision" : "38132a8505ffe780f61ac44522dd1ffa8e8be2fe",
+        "version" : "0.11.0"
+      }
+    },
+    {
+      "identity" : "highlight",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nkristek/Highlight.git",
+      "state" : {
+        "revision" : "8e0908cb4b88f629fd8041b361f081ec8486c056",
+        "version" : "0.4.0"
+      }
+    },
+    {
+      "identity" : "ios-snapshot-test-case",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/uber/ios-snapshot-test-case.git",
+      "state" : {
+        "revision" : "7b10770333a961be6e5a41c9ce04b8c6d3990126",
+        "version" : "8.0.0"
+      }
+    },
+    {
+      "identity" : "swift-snapshot-testing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-snapshot-testing.git",
+      "state" : {
+        "revision" : "42a086182681cf661f5c47c9b7dc3931de18c6d7",
+        "version" : "1.17.6"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "0687f71944021d616d34d922343dcef086855920",
+        "version" : "600.0.1"
+      }
+    }
+  ],
+  "version" : 3
+}

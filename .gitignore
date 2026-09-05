@@ -1,0 +1,6 @@
+.build/
+.swiftpm/
+*.xcuserdata/
+xcuserdata/
+.DS_Store
+local.properties

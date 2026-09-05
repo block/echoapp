@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# echo-mcp: stdio → HTTP bridge for the Echo MCP server.
+#
+# Claude Desktop / Goose config:
+#   "echo": { "command": "/path/to/echo-mcp" }
+#
+# Requirements: uv must be installed (https://docs.astral.sh/uv/)
+
+set -euo pipefail
+
+# Ensure common binary locations are in PATH so uvx/python3 are found even
+# when Claude Code or other launchers spawn this with a minimal environment.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+CONFIG_FILE="$HOME/.config/echo/mcp.json"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo '{"error": "EchoApp is not running. Open EchoApp.app and connect a device first."}' >&2
+    exit 1
+fi
+
+MCP_URL=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['url'])" "$CONFIG_FILE")
+
+if [ -z "$MCP_URL" ]; then
+    echo '{"error": "Could not read MCP URL from ~/.config/echo/mcp.json"}' >&2
+    exit 1
+fi
+
+exec uvx mcp-proxy --transport streamablehttp "$MCP_URL"

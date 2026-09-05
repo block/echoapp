@@ -1,0 +1,60 @@
+plugins {
+  alias(libs.plugins.androidLibrary)
+  alias(libs.plugins.mavenPublish)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.ktfmt)
+  alias(libs.plugins.compose.compiler)
+}
+
+android {
+  namespace 'xyz.block.echoapp.plugin'
+  compileSdk 36
+
+  defaultConfig {
+    minSdk 26
+
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    consumerProguardFiles 'consumer-proguard-rules.pro'
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies {
+  api libs.coroutines.core
+
+  implementation libs.androidx.core
+  implementation libs.androidx.ui
+  implementation libs.androidx.ui.tooling.preview
+  implementation platform(libs.compose.bom)
+  implementation libs.curtains
+  implementation libs.jetbrains.annotations
+  implementation libs.moshi.adapters
+  implementation libs.moshi.core
+  implementation libs.okhttp
+  implementation libs.okhttp.loggingInterceptor
+  implementation libs.okhttp.urlConnection
+  implementation libs.radiography
+
+  testImplementation libs.androidx.test.core
+  testImplementation libs.coroutines.test
+  testImplementation libs.junit
+  testImplementation libs.okhttp.mockwebserver
+  testImplementation libs.roboletric
+  testImplementation libs.truth
+  testImplementation libs.turbine
+
+  ksp libs.moshi.kotlinCodegen
+  ksp libs.moshix.sealedSwiftCompat
+
+  compileOnly libs.logcat
+  compileOnly libs.timber
+}

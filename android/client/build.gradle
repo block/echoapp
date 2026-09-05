@@ -1,0 +1,55 @@
+plugins {
+  alias(libs.plugins.androidLibrary)
+
+  alias(libs.plugins.mavenPublish)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.ktfmt)
+}
+
+android {
+  namespace 'xyz.block.echoapp.client'
+  compileSdk 36
+
+  defaultConfig {
+    minSdk 24
+
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+    consumerProguardFiles 'proguard-rules.pro'
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies {
+  api project(":plugin-api")
+  implementation libs.androidx.core
+  implementation libs.okhttp
+  implementation libs.okhttp.loggingInterceptor
+  implementation libs.okhttp.urlConnection
+  implementation libs.coroutines.core
+  implementation libs.moshi.core
+  implementation libs.moshi.adapters
+  ksp libs.moshi.kotlinCodegen
+
+  testImplementation libs.junit
+  testImplementation libs.truth
+  testImplementation libs.coroutines.test
+  testImplementation libs.turbine
+  testImplementation libs.okhttp.mockwebserver
+}
+
+tasks.withType(Test).configureEach {
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+  }
+}
