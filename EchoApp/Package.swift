@@ -82,7 +82,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMinor(from: "1.23.2")),
         .package(url: "https://github.com/tuist/XcodeProj.git", .upToNextMajor(from: "8.0.0")),
         .package(url: "https://github.com/vapor/vapor", .upToNextMajor(from: "4.121.3")),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.0"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.1"),
         // Explicit override: swift-numerics 1.0.3 (from Vapor's swift-crypto) is incompatible
         // with Xcode 26 — _NumericsShims moved. 1.1.1 fixes this.
         .package(url: "https://github.com/apple/swift-numerics.git", from: "1.1.1"),
