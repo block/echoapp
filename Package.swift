@@ -68,7 +68,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/nkristek/Highlight.git", from: "0.4.0"),
         .package(url: "https://github.com/cashapp/AccessibilitySnapshot", from: "0.11.0"),
-        .package(url: "https://github.com/pointfreeco/swift-concurrency-extras.git", from: "1.3.0"),
+        .package(url: "https://github.com/pointfreeco/swift-concurrency-extras.git", from: "1.4.1"),
     ],
     targets: [
         .target(
