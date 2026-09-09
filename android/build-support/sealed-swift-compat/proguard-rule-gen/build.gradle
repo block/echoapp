@@ -1,0 +1,39 @@
+plugins {
+  alias(libs.plugins.kotlinJvm)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.ktfmt)
+}
+
+group = "xyz.block.echoapp.buildsupport"
+version = "0"
+
+kotlin {
+  compilerOptions {
+    optIn.add("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
+  }
+}
+
+dependencies {
+  compileOnly libs.ksp.api
+  compileOnly libs.kotlin.compilerEmbeddable
+
+  implementation libs.auto.common
+  implementation libs.auto.service
+  implementation libs.kotlinpoet
+  implementation libs.kotlinpoet.ksp
+  implementation libs.moshi.core
+  implementation libs.moshi.adapters
+  implementation libs.moshi.kotlinCodegen
+
+  ksp libs.auto.serviceKsp
+  ksp libs.moshi.kotlinCodegen
+
+  testImplementation libs.truth
+  testImplementation libs.junit
+  testImplementation libs.kotlinCompileTesting
+  testImplementation libs.kotlinCompileTesting.ksp
+  testImplementation libs.kotlin.compilerEmbeddable
+  testImplementation libs.ksp
+  testImplementation libs.ksp.aa.embeddable
+  testImplementation libs.ksp.commonDeps
+}

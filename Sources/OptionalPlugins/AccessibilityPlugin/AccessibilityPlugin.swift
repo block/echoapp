@@ -168,11 +168,12 @@ public final class AccessibilityPlugin: ClientPlugin {
                                 height: frame.height
                             )
                         case let .path(path):
+                            let bounds = path.bezierPath.bounds
                             return Rect(
-                                x: path.bounds.midX,
-                                y: path.bounds.midY,
-                                width: path.bounds.width,
-                                height: path.bounds.height
+                                x: bounds.midX,
+                                y: bounds.midY,
+                                width: bounds.width,
+                                height: bounds.height
                             )
                         }
                     }()
