@@ -62,7 +62,7 @@ struct UpdatesSettingsView: View {
     }
 
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        EchoAppReleaseVersion.current().rawValue
     }
 
     private var lastCheckDate: String {

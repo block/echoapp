@@ -15,7 +15,7 @@ Whether you're fixing a typo, improving documentation, or adding a new feature, 
    * Use descriptive branch names that reflect the changes you're making
 3. **Set Up Development Environment**
    * Follow the setup instructions in [README.md](./README.md)
-   * Build and test with Swift Package Manager: `swift build` and `swift test`
+   * Build and test with Swift Package Manager: `xcrun swift build` and `xcrun swift test`
 
 ## Making Changes
 

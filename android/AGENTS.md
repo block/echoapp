@@ -2,11 +2,15 @@
 
 ## Project structure
 
-The codebase is organized into three main modules:
+The codebase is organized into three product modules:
 
 - `client/` - Core EchoClient implementation for making apps discoverable and managing connections
 - `plugin-api/` - Plugin APIs and built-in plugins (analytics, logging, networking, accessibility, etc.)
 - `sample/` - Sample Android app demonstrating Echo integration with Jetpack Compose UI
+
+Build-only KSP processors live under `build-support/sealed-swift-compat/`.
+They keep the public build self-contained and must not be published as EchoApp
+runtime dependencies.
 
 All Kotlin source files are located under `src/main/java/` and tests under `src/test/java/` following standard Android conventions.
 

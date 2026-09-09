@@ -53,7 +53,7 @@ dependencies {
   testImplementation libs.turbine
 
   ksp libs.moshi.kotlinCodegen
-  ksp libs.moshix.sealedSwiftCompat
+  ksp project(':sealed-swift-compat-codegen')
 
   compileOnly libs.logcat
   compileOnly libs.timber

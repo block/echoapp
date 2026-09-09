@@ -3,7 +3,7 @@ import Foundation
 
 protocol AppUpdateService {
     /// Current version of the application
-    var currentVersion: Version { get }
+    var currentVersion: EchoAppReleaseVersion { get }
     
     /// Checks for available updates
     /// - Returns: The latest release if available and newer than current version, nil otherwise
@@ -22,14 +22,16 @@ class RealAppUpdateService: AppUpdateService {
     // MARK: - Properties
     
     private let appUpdateSource: AppUpdateSource
-    let currentVersion: Version
+    let currentVersion: EchoAppReleaseVersion
     
     // MARK: - Initialization
     
-    init(appUpdateSource: AppUpdateSource) {
+    init(
+        appUpdateSource: AppUpdateSource,
+        currentVersion: EchoAppReleaseVersion = .current()
+    ) {
         self.appUpdateSource = appUpdateSource
-        let versionString = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
-        self.currentVersion = Version(versionString)
+        self.currentVersion = currentVersion
     }
     
     convenience init() {
@@ -40,7 +42,9 @@ class RealAppUpdateService: AppUpdateService {
         let release = try await appUpdateSource.checkForUpdates()
 
         // Only return the release if it's actually newer than current version
-        if let release = release, Version(release.version) > currentVersion {
+        if let release = release,
+           let releaseVersion = EchoAppReleaseVersion(githubReleaseTag: release.version),
+           releaseVersion.hasHigherPrecedence(than: currentVersion) {
             return release
         }
         

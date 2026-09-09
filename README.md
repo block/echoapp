@@ -42,6 +42,9 @@ Download the latest release from
 [GitHub Releases](https://github.com/block/echoapp/releases). The app checks
 GitHub Releases for updates.
 
+All public artifacts share the version and tag mapping in
+[Release versioning](Documentation/ReleaseVersioning.md).
+
 ### Swift SDK
 
 Add the package to your `Package.swift`:
@@ -80,19 +83,29 @@ Swift 5.10+ and Xcode with the macOS 14 SDK are required for the app.
 
 ```sh
 # Swift SDK (repo root)
-swift build
-swift test
+xcrun swift build
+xcrun swift test
 
 # Desktop app: open App/App.xcodeproj in Xcode and run the Echo scheme,
 # or build the CLI and tools directly:
-cd EchoApp && swift build      # builds the echoapp CLI and echo-tool
+cd EchoApp && xcrun swift build      # builds the echoapp CLI and echo-tool
 
-# Android SDK. The extra repository is temporarily required for
-# com.squareup.moshix:sealed-swift-compat-codegen until it is on Maven Central.
+# Android SDK. Build-only code generators are compiled from this checkout.
 cd android
-export ECHOAPP_EXTRA_MAVEN_URL=https://global.block-artifacts.com/artifactory/square-public
 ./gradlew build
 ```
+
+To exercise every public Swift and macOS distribution surface from a clean
+temporary build directory, including an iOS Simulator AccessibilityPlugin
+consumer and an exact-version external EchoClient consumer, run:
+
+```sh
+Scripts/verify_public_builds.sh
+```
+
+The public matrix builds an archive of the tracked public tree with no private
+repositories, credentials, or signing certificates. See
+[`Scripts/README.md`](Scripts/README.md) for the full list of checks.
 
 ## Community
 

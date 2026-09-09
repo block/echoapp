@@ -37,15 +37,6 @@ dependencyResolutionManagement {
   repositories {
     maven { url mavenRepo('ECHOAPP_GRADLE_REPO_ANDROID', 'mavenRepoAndroid') }
     maven { url mavenRepo('ECHOAPP_GRADLE_REPO_GOOGLE', 'mavenRepoGoogle') }
-    // com.squareup.moshix:sealed-swift-compat-codegen is not published to a public repository
-    // yet, so this build cannot resolve it off-VPN until moshix ships it publicly. Until then,
-    // point echoapp.extraMavenUrl (e.g. in ~/.gradle/gradle.properties) or the
-    // ECHOAPP_EXTRA_MAVEN_URL environment variable at a mirror that hosts it. Defaults to unset.
-    def extraMavenUrl = providers.environmentVariable('ECHOAPP_EXTRA_MAVEN_URL').orNull?.trim() ?:
-        providers.gradleProperty('echoapp.extraMavenUrl').orNull?.trim()
-    if (extraMavenUrl) {
-      maven { url extraMavenUrl }
-    }
   }
 }
 
@@ -53,3 +44,10 @@ rootProject.name = "echo-android"
 include ':sample'
 include ':client'
 include ':plugin-api'
+include ':sealed-swift-compat-codegen'
+include ':sealed-swift-compat-proguard-rule-gen'
+
+project(':sealed-swift-compat-codegen').projectDir =
+    file('build-support/sealed-swift-compat/codegen')
+project(':sealed-swift-compat-proguard-rule-gen').projectDir =
+    file('build-support/sealed-swift-compat/proguard-rule-gen')
