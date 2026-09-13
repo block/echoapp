@@ -1,9 +1,9 @@
 [versions]
 agp = "9.1.0"
 autoService = "1.1.1"
-kotlin = "2.3.20"
+kotlin = "2.4.20"
 kotlinCompileTesting = "0.13.0"
-kotlinpoet = "2.3.0"
+kotlinpoet = "2.4.0"
 ksp = "2.3.11"
 core-ktx = "1.12.0"
 coroutines = "1.11.0"
@@ -12,16 +12,16 @@ appcompat = "1.6.1"
 material = "1.10.0"
 okhttp = "4.12.0"
 lifecycle-runtime-ktx = "2.6.2"
-logcat = "0.1"
+logcat = "0.4"
 activity-compose = "1.8.1"
 compose-bom = "2025.04.00"
 moshi = "1.15.0"
 timber = "5.0.1"
-ktfmt = "0.25.0"
+ktfmt = "0.27.0"
 truth = "1.4.2"
-turbine = "1.1.0"
+turbine = "1.2.1"
 jetbrains-annotations = "26.1.0"
-robolectric = "4.14"
+robolectric = "4.17"
 
 [libraries]
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
@@ -66,7 +66,7 @@ okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.
 okhttp-loggingInterceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp-urlConnection = { module = "com.squareup.okhttp3:okhttp-urlconnection", version.ref = "okhttp" }
 
-radiography = { module = "com.squareup.radiography:radiography", version = "2.7" }
+radiography = { module = "com.squareup.radiography:radiography", version = "2.10" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
@@ -88,4 +88,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.35.0" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }
