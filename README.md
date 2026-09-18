@@ -114,6 +114,9 @@ repositories, credentials, or signing certificates. See
 - [GOVERNANCE.md](GOVERNANCE.md) - how the project is governed
 - [SECURITY.md](SECURITY.md) - reporting vulnerabilities privately
 
+## Special Thanks
+[jmesmith](https://github.com/jmesmith) for helping make a humble hackathon project a reality. Echo wouldn't exist without him.
+
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
