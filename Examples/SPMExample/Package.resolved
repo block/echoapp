@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/cashapp/AccessibilitySnapshot",
       "state" : {
-        "revision" : "38132a8505ffe780f61ac44522dd1ffa8e8be2fe",
-        "version" : "0.11.0"
+        "revision" : "5b03db81f49275312ea1a56914dbe9aa1608e3f0",
+        "version" : "0.12.1"
       }
     },
     {
