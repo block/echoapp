@@ -1,0 +1,155 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Semantic Version tag, for example 3.0.0 or 3.0.0-rc.1"
+        required: true
+        type: string
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: echo
+    outputs:
+      release_version: ${{ steps.version.outputs.release_version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          path: echo
+
+      - name: Resolve release version
+        id: version
+        run: |
+          release_version="0.0.0-dev"
+          prerelease=true
+          if [[ -n "${TAG:-}" ]]; then
+            release_version="$(./Scripts/release_version.sh "$TAG")"
+            precedence_version="${release_version%%+*}"
+            if [[ "$precedence_version" != *-* ]]; then
+              prerelease=false
+            fi
+          fi
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Select Xcode
+        run: |
+          xcode_version="$(tr -d '[:space:]' < .xcode-version)"
+          sudo xcode-select -s "/Applications/Xcode_${xcode_version}.app"
+          defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Build EchoApp archive
+        run: |
+          ./Scripts/build_release.sh \
+            --archive-path /tmp/Echo.xcarchive \
+            --version "${TAG:-}"
+          (cd /tmp/Echo.xcarchive && zip --symlinks -r /tmp/Echo.xcarchive.zip .)
+
+      - name: Build echo-cli
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release_version }}
+        run: |
+          xcrun swift build --package-path EchoApp -c release --product echoapp
+          cli_bin_path="$(xcrun swift build --package-path EchoApp -c release --product echoapp --show-bin-path)"
+          cli_version="$("$cli_bin_path/echoapp" --version)"
+          [[ "$cli_version" == "$RELEASE_VERSION" ]] || {
+            echo "::error::echoapp reports $cli_version, expected $RELEASE_VERSION"
+            exit 1
+          }
+          codesign --force --sign - --timestamp "$cli_bin_path/echoapp"
+          zip -j /tmp/echo-cli-macos-arm64.zip "$cli_bin_path/echoapp"
+          (cd "$cli_bin_path" && zip -r /tmp/echo-cli-macos-arm64.zip echo-app_EchoCLI.bundle)
+
+      - name: Build source archive
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release_version }}
+        run: |
+          COPYFILE_DISABLE=1 tar czf "/tmp/echo.$RELEASE_VERSION.tar.gz" \
+            --exclude="./.build" \
+            --exclude="*/.build" \
+            --exclude="./.git" \
+            --exclude="./.github" \
+            .
+
+      - name: Upload unsigned app archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Echo.xcarchive
+          path: /tmp/Echo.xcarchive.zip
+          if-no-files-found: error
+
+      - name: Upload unsigned CLI
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: echo-cli-macos-arm64
+          path: /tmp/echo-cli-macos-arm64.zip
+          if-no-files-found: error
+
+      - name: Upload draft release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: draft-release-assets
+          path: /tmp/echo.${{ steps.version.outputs.release_version }}.tar.gz
+          if-no-files-found: error
+
+  create-draft:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download exact-run release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: draft-release-assets
+          path: /tmp/release-assets
+
+      - name: Create source-only draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ needs.build.outputs.release_version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          semver_pattern='^((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if [[ ! "$RELEASE_VERSION" =~ $semver_pattern ]]; then
+            echo "::error::Invalid release version from build job: $RELEASE_VERSION"
+            exit 1
+          fi
+          resolved_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq .sha)"
+          if [[ "$resolved_sha" != "$GITHUB_SHA" ]]; then
+            echo "::error::GITHUB_SHA did not resolve to the exact workflow commit."
+            exit 1
+          fi
+          flags=(--draft)
+          if [[ "$PRERELEASE" == true ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$RELEASE_VERSION" \
+            "${flags[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$RELEASE_VERSION" \
+            --target "$GITHUB_SHA" \
+            --notes "🤖 Automated EchoApp release." \
+            --generate-notes \
+            "/tmp/release-assets/echo.$RELEASE_VERSION.tar.gz"
