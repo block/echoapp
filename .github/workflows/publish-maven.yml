@@ -1,0 +1,259 @@
+# Publishes the Android artifacts (xyz.block.echoapp:echo-client and
+# xyz.block.echoapp:echo-plugin-api) to Maven Central via the Central Portal.
+#
+# The render engine excludes .github paths, so this canonical internal copy is installed
+# by hand at .github/workflows/publish-maven.yml in block/echoapp. Build-only KSP
+# processors compile from this checkout; the metadata gate below proves they never enter
+# the published POM or module metadata.
+#
+# Release procedure: bump VERSION_NAME in android/gradle.properties, then push a tag
+# android-vX.Y.Z (optionally with a -qualifier, e.g. android-v0.1.0-beta10) matching that
+# version. The android-v prefix keeps these tags disjoint from the app's release tags.
+name: publish-maven
+
+on:
+  push:
+    tags:
+      - 'android-v[0-9]*'
+
+# Publishing uses its own secrets; the GITHUB_TOKEN needs nothing beyond checkout.
+permissions:
+  contents: read
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      maven_version: ${{ steps.maven_version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The tag check below reads a public ref. Do not persist GITHUB_TOKEN
+          # credentials into the local Git configuration for that fetch.
+          persist-credentials: false
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        with:
+          python-version: '3.13'
+
+      - name: Compute release version
+        id: maven_version
+        # The public validator owns the SemVer grammar shared with desktop
+        # releases. Keep Android's tag namespace separate, then require its
+        # version to match the Maven publication exactly.
+        run: |
+          if [[ "$GITHUB_REF_NAME" != android-v* ]]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not start with android-v; refusing to publish."
+            exit 1
+          fi
+          version="$(Scripts/release_version.sh "${GITHUB_REF_NAME#android-v}")"
+          configured="$(sed -n 's/^VERSION_NAME=//p' android/gradle.properties)"
+          if [[ "$version" != "$configured" ]]; then
+            echo "::error::Tag version '$version' does not match VERSION_NAME '$configured' in android/gradle.properties."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Publishing Maven artifacts as $version"
+
+      - name: Verify matching EchoApp release tag
+        # Android's namespaced tag and the bare EchoApp release tag must point
+        # at the same commit. Maven Central is immutable, so fail before any
+        # publication if the release-delivery layer is absent or mismatched.
+        env:
+          RELEASE_VERSION: ${{ steps.maven_version.outputs.version }}
+        run: |
+          release_tag="refs/tags/$RELEASE_VERSION"
+          # Fetch only through credential-free Git configuration. The public
+          # tag needs no token, and this step runs before publish secrets exist.
+          if ! GIT_CONFIG_NOSYSTEM=1 \
+              GIT_CONFIG_GLOBAL=/dev/null \
+              GIT_TERMINAL_PROMPT=0 \
+              GIT_ASKPASS=/bin/false \
+              git -c credential.helper= \
+                  -c core.askPass=/bin/false \
+                  -c credential.interactive=false \
+                  fetch --no-tags origin "$release_tag:$release_tag"; then
+            echo "::error::Could not fetch required EchoApp release tag '$RELEASE_VERSION'. Publish that bare tag before Android artifacts."
+            exit 1
+          fi
+
+          if ! release_commit="$(git rev-parse "$release_tag^{commit}")"; then
+            echo "::error::Required EchoApp release tag '$RELEASE_VERSION' does not resolve to a commit."
+            exit 1
+          fi
+          if [[ "$release_commit" != "$GITHUB_SHA" ]]; then
+            echo "::error::EchoApp release tag '$RELEASE_VERSION' resolves to '$release_commit', not Android tag commit '$GITHUB_SHA'."
+            exit 1
+          fi
+          echo "Verified EchoApp release tag $RELEASE_VERSION at $release_commit"
+
+      - name: Verify unified GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAVEN_VERSION: ${{ steps.maven_version.outputs.version }}
+        run: |
+          [[ "$(gh release view "$MAVEN_VERSION" --json tagName --jq .tagName)" == "$MAVEN_VERSION" ]] || {
+            echo "::error::Missing unified GitHub Release for $MAVEN_VERSION."
+            exit 1
+          }
+
+      - name: Verify public dependency metadata
+        working-directory: android
+        run: |
+          ./gradlew publishToMavenLocal \
+            -PVERSION_NAME="$MAVEN_VERSION" \
+            -PRELEASE_SIGNING_ENABLED=true
+          if grep -R --fixed-strings 'sealed-swift-compat-' "$HOME/.m2/repository/xyz/block/echoapp"; then
+            echo "::error::Build-only moshix dependency leaked into published metadata."
+            exit 1
+          fi
+          "$GITHUB_WORKSPACE/Scripts/prepare_maven_release_assets.sh" \
+            "$HOME/.m2/repository" "$MAVEN_VERSION" "$RUNNER_TEMP/echoapp-android"
+          (cd "$RUNNER_TEMP" && zip -qr "echoapp-android-$MAVEN_VERSION.zip" echoapp-android)
+        env:
+          MAVEN_VERSION: ${{ steps.maven_version.outputs.version }}
+          REQUIRE_SIGNATURES: "true"
+          ECHOAPP_RELEASE_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
+          ECHOAPP_RELEASE_GPG_FINGERPRINT: ${{ vars.ECHOAPP_RELEASE_GPG_FINGERPRINT }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+
+      - name: Publish to Maven Central
+        working-directory: android
+        # The version rides in via env rather than ${{ }} interpolation into the script text: it
+        # derives from the tag name, and inlining tag-derived input into a run: step that holds
+        # the publish secrets is the classic template-injection shape. RELEASE_SIGNING_ENABLED
+        # defaults to false in gradle.properties so local builds need no key; releases must be
+        # signed, hence the explicit override here.
+        run: |
+          ./gradlew publishAllPublicationsToMavenCentralRepository \
+            -PVERSION_NAME="$MAVEN_VERSION" \
+            -PRELEASE_SIGNING_ENABLED=true
+        env:
+          MAVEN_VERSION: ${{ steps.maven_version.outputs.version }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+
+      # Keep this audit bundle private until maintainers have reviewed and manually
+      # published the Central deployment. The finalization job owns release writes.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: echoapp-android-${{ steps.maven_version.outputs.version }}
+          path: ${{ runner.temp }}/echoapp-android-${{ steps.maven_version.outputs.version }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  finalize:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Required release-maintainer approval comes only after Central Portal inspection
+    # and manual publication, while SONATYPE_AUTOMATIC_RELEASE remains false.
+    environment: echoapp-maven-central-release
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: echoapp-android-${{ needs.publish.outputs.maven_version }}
+          path: ${{ runner.temp }}
+
+      - name: Verify retained Android audit bundle
+        env:
+          MAVEN_VERSION: ${{ needs.publish.outputs.maven_version }}
+        run: |
+          unzip -q "$RUNNER_TEMP/echoapp-android-$MAVEN_VERSION.zip" -d "$RUNNER_TEMP"
+          (cd "$RUNNER_TEMP/echoapp-android" && shasum -a 256 --check SHA256SUMS)
+
+      - name: Wait for Maven Central artifacts
+        env:
+          MAVEN_VERSION: ${{ needs.publish.outputs.maven_version }}
+        run: |
+          audit_dir="$RUNNER_TEMP/echoapp-android"
+          central_dir="$RUNNER_TEMP/echoapp-android-central"
+          deadline=$((SECONDS + 3600))
+          for attempt in {1..61}; do
+            missing=0
+            rm -rf "$central_dir"
+            for module in echo-client echo-plugin-api; do
+              for suffix in .aar .pom .module -sources.jar -javadoc.jar; do
+                artifact="${module}-${MAVEN_VERSION}${suffix}"
+                for published in "$artifact" "$artifact.asc"; do
+                  remaining=$((deadline - SECONDS))
+                  if (( remaining <= 0 )); then
+                    missing=1
+                    break 3
+                  fi
+                  url="https://repo.maven.apache.org/maven2/xyz/block/echoapp/$module/$MAVEN_VERSION/$published"
+                  destination="$central_dir/xyz/block/echoapp/$module/$MAVEN_VERSION/$published"
+                  mkdir -p "$(dirname "$destination")"
+                  timeout_seconds=$(( remaining < 10 ? remaining : 10 ))
+                  if ! curl --fail --silent --show-error --location \
+                    --connect-timeout 5 --max-time "$timeout_seconds" --output "$destination" "$url"; then
+                    missing=1
+                  fi
+                done
+              done
+            done
+            if [[ "$missing" == 0 ]]; then
+              (cd "$central_dir" && shasum -a 256 --check "$audit_dir/SHA256SUMS") && exit 0
+              echo "::error::Maven Central artifacts differ from the retained audit bundle."
+              exit 1
+            fi
+            [[ "$attempt" == 61 || "$SECONDS" -ge "$deadline" ]] && break
+            wait_seconds=$((deadline - SECONDS))
+            (( wait_seconds > 60 )) && wait_seconds=60
+            echo "Maven Central propagation is incomplete (attempt $attempt/61); retrying in $wait_seconds seconds."
+            sleep "$wait_seconds"
+          done
+          echo "::error::Maven Central did not expose the complete signed Android artifact set within 60 minutes."
+          exit 1
+
+      - name: Reverify matching EchoApp release tag before attachment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.publish.outputs.maven_version }}
+        run: |
+          android_ref="refs/echoapp-finalize/android"
+          release_ref="refs/echoapp-finalize/release"
+          GIT_CONFIG_NOSYSTEM=1 \
+            GIT_CONFIG_GLOBAL=/dev/null \
+            GIT_TERMINAL_PROMPT=0 \
+            GIT_ASKPASS=/bin/false \
+            git -c credential.helper= \
+                -c core.askPass=/bin/false \
+                -c credential.interactive=false \
+                fetch --no-tags --force origin \
+                  "refs/tags/$GITHUB_REF_NAME:$android_ref" \
+                  "refs/tags/$RELEASE_VERSION:$release_ref"
+          android_commit="$(git rev-parse "$android_ref^{commit}")"
+          release_commit="$(git rev-parse "$release_ref^{commit}")"
+          if [[ "$android_commit" != "$release_commit" || "$android_commit" != "$GITHUB_SHA" ]]; then
+            echo "::error::Android tag, EchoApp release tag, and checked-out source must name one commit."
+            exit 1
+          fi
+          [[ "$(gh release view "$RELEASE_VERSION" --json tagName --jq .tagName)" == "$RELEASE_VERSION" ]] || {
+            echo "::error::Missing unified GitHub Release for $RELEASE_VERSION."
+            exit 1
+          }
+
+      - name: Attach Android audit bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAVEN_VERSION: ${{ needs.publish.outputs.maven_version }}
+        run: gh release upload "$MAVEN_VERSION" "$RUNNER_TEMP/echoapp-android-$MAVEN_VERSION.zip" --clobber
