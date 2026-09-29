@@ -1,0 +1,26 @@
+title: EchoApp Docs
+description: Live debugging for iOS and Android apps, from your Mac or terminal.
+url: https://block.github.io
+baseurl: /echoapp
+repository: block/echoapp
+theme: null
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+strict_front_matter: true
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+      search: true
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md

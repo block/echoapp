@@ -147,16 +147,22 @@ extension AppState {
 
     var sortedCustomResponsePolicies: [ResponsePolicy] {
         customResponsePolicies
-            .sorted { $0.name < $1.name }
             .map(ResponsePolicy.custom)
+            .sorted(by: Self.isOrderedByName)
     }
 
     func fixtureResponsePolicies(for endpoint: Endpoint) -> [ResponsePolicy]? {
-        if let fixtures = self.responseFixtures[endpoint], !fixtures.isEmpty {
-            return fixtures.map(ResponsePolicy.fixture)
-        } else {
+        guard let fixtures = self.responseFixtures[endpoint], !fixtures.isEmpty else {
             return nil
         }
+        return fixtures
+            .map(ResponsePolicy.fixture)
+            .sorted(by: Self.isOrderedByName)
+    }
+
+    /// Finder-style ordering (case-insensitive, numeric-aware) shared by every response-policy list.
+    private static func isOrderedByName(_ lhs: ResponsePolicy, _ rhs: ResponsePolicy) -> Bool {
+        lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
     }
 }
 

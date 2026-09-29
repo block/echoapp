@@ -29,6 +29,11 @@ struct BuildPluginCommand: ParsableCommand {
     )
     var packagePath: URL = URL(string: "Package.swift")!
 
+    @Option(
+        help: "A unique reverse-DNS identifier for the plugin framework"
+    )
+    var bundleIdentifier: String?
+
     func run() throws {
         let packageDir = packagePath.deletingLastPathComponent()
 
@@ -46,24 +51,15 @@ struct BuildPluginCommand: ParsableCommand {
             ]
         )
 
-        // Create the .echoplugin directory
-        let pluginDirectory = outputDir.appendingPathComponent("\(pluginName).echoplugin", isDirectory: true)
-        try execute(
-            "/bin/mkdir",
-            arguments: [
-                "-p",
-                pluginDirectory.path,
-            ]
-        )
-
-        // Copy the plugin library into the .echoplugin directory
-        let pluginDylibURL = pluginDirectory.appendingPathComponent("lib\(pluginName).dylib", isDirectory: false)
-        try execute(
-            "/bin/cp",
-            arguments: [
-                packageDir.appendingPathComponent(".build/release/lib\(pluginName).dylib", isDirectory: false).path,
-                pluginDylibURL.path,
-            ]
+        let buildProductsDirectory = packageDir.appendingPathComponent(".build/release", isDirectory: true)
+        let builtDylibURL = buildProductsDirectory.appendingPathComponent("lib\(pluginName).dylib")
+        let pluginInfoURL = try findPluginInfo(in: buildProductsDirectory)
+        let pluginBundle = try PluginBundleBuilder().build(
+            pluginName: pluginName,
+            bundleIdentifier: bundleIdentifier ?? "xyz.block.echoapp.plugin.\(pluginName)",
+            dylibURL: builtDylibURL,
+            pluginInfoURL: pluginInfoURL,
+            outputDirectory: outputDir
         )
 
         // EchoApp.app provides EchoPluginAPI via a framework,
@@ -76,7 +72,7 @@ struct BuildPluginCommand: ParsableCommand {
                 "-change",
                 "@rpath/libEchoPluginAPI.dylib",
                 "@rpath/EchoPluginAPI.framework/EchoPluginAPI",
-                pluginDylibURL.path,
+                pluginBundle.executableURL.path,
             ]
         )
 
@@ -85,7 +81,27 @@ struct BuildPluginCommand: ParsableCommand {
         // `codesign -s "Apple Development: ____ (___)"`
 
         Logger(subsystem: "xyz.block.echoapp.tool", category: "BuildPluginCommand")
-            .info("Built plugin at \(pluginDirectory.path)")
+            .info("Built plugin at \(pluginBundle.bundleURL.path)")
     }
 
+}
+
+// MARK: - Plugin Resources
+
+private extension BuildPluginCommand {
+    func findPluginInfo(in buildProductsDirectory: URL) throws -> URL {
+        let resourceBundleSuffix = "_\(pluginName).bundle"
+        let candidates = try FileManager.default
+            .contentsOfDirectory(at: buildProductsDirectory, includingPropertiesForKeys: nil)
+            .filter { $0.lastPathComponent.hasSuffix(resourceBundleSuffix) }
+            .map { $0.appendingPathComponent("PluginInfo.plist") }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+
+        guard candidates.count == 1, let pluginInfoURL = candidates.first else {
+            throw ValidationError(
+                "Expected one PluginInfo.plist in a SwiftPM resource bundle ending in '\(resourceBundleSuffix)'; found \(candidates.count)."
+            )
+        }
+        return pluginInfoURL
+    }
 }

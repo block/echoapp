@@ -19,6 +19,9 @@ data - network requests, logs, analytics events, key-value stores, accessibility
 snapshots, crash reports, and more - from the running app into inspectable
 desktop UIs.
 
+Read the [EchoApp documentation](https://block.github.io/echoapp/) for setup guides,
+architecture, plugin development, CLI usage, MCP integration, and troubleshooting.
+
 ## What's in the box
 
 - **Desktop app** - the macOS host (`App/`, `EchoApp/`) with built-in desktop
@@ -109,6 +112,7 @@ repositories, credentials, or signing certificates. See
 
 ## Community
 
+- [Documentation](https://block.github.io/echoapp/) - guides and reference material
 - [CONTRIBUTING.md](CONTRIBUTING.md) - how to get set up and send changes
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) - community standards
 - [GOVERNANCE.md](GOVERNANCE.md) - how the project is governed

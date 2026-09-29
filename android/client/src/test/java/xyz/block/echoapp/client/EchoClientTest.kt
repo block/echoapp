@@ -38,8 +38,8 @@ class EchoClientTest {
   @Before
   fun setUp() {
     mockwebserver.start(
-        InetAddress.getLocalHost(),
-        port = TEST_SERVER_PORT,
+        InetAddress.getByName(LOOPBACK_HOST),
+        port = 0,
     )
     EchoDebugLogger.install(StdOutEchoDebugLogger)
   }
@@ -112,7 +112,7 @@ class EchoClientTest {
 
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
 
@@ -141,7 +141,7 @@ class EchoClientTest {
 
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
 
@@ -159,7 +159,7 @@ class EchoClientTest {
       assertThat(awaitItem()).isEqualTo(Advertising)
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
       val newServerListener = SuspendingWebSocketListener()
@@ -182,7 +182,7 @@ class EchoClientTest {
 
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
 
@@ -220,7 +220,7 @@ class EchoClientTest {
 
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
 
@@ -273,7 +273,7 @@ class EchoClientTest {
 
       nsdAdvertiser.events.tryEmit(
           ConnectionRequest(
-              "ws://${mockwebserver.hostName}:$TEST_SERVER_PORT",
+              "ws://$LOOPBACK_HOST:${mockwebserver.port}",
           ),
       )
 
@@ -347,9 +347,9 @@ class EchoClientTest {
   }
 
   companion object {
+    private const val LOOPBACK_HOST = "127.0.0.1"
     private const val TEST_APP_IDENTIFIER = "xyz.block.echoapp.client.test"
     private const val TEST_DEVICE_IDENTIFIER = "deviceIdentifier"
     private const val TEST_DEVICE_NAME = "deviceName"
-    private const val TEST_SERVER_PORT = 9999
   }
 }

@@ -51,5 +51,7 @@ require '--netrc-file "$temporary_home_path/.netrc"'
 require '-scmProvider system'
 require '-clonedSourcePackagesDirPath "$cloned_source_packages_path"'
 require '-packageCachePath "$xcode_package_cache_path"'
+require '-skipMacroValidation'
+require '-onlyUsePackageVersionsFromResolvedFile'
 
 printf 'Public build isolation assertions passed.\n'

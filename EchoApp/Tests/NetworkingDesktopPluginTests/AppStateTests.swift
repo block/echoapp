@@ -267,6 +267,63 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(exchange.textFor(.response, tab: .raw), #"{"ok":true}"#)
     }
 
+    // MARK: - Tests - Fixtures
+
+    func test_fixtureResponsePolicies_sortsFixturesByNameNaturally() {
+        let endpoint = Endpoint(path: "/2.0/example/payment")
+        let unsorted = [
+            "fixture10.json",
+            "Beta.json",
+            "fixture2.json",
+            "alpha.json",
+        ].map { name in
+            Fixture(
+                kind: .text(contentType: "application/json"),
+                url: URL(string: "file:///fixtures/2.0/example/payment/\(name)")!
+            )
+        }
+        let state = Factory.makeAppState(responseFixtures: [endpoint: unsorted])
+
+        let names = state.fixtureResponsePolicies(for: endpoint)?.map(\.name)
+
+        XCTAssertEqual(names, ["alpha.json", "Beta.json", "fixture2.json", "fixture10.json"])
+    }
+
+    func test_fixtureResponsePolicies_returnsNilWhenNoFixtures() {
+        let endpoint = Endpoint(path: "/2.0/example/payment")
+        let state = Factory.makeAppState(responseFixtures: [:])
+
+        XCTAssertNil(state.fixtureResponsePolicies(for: endpoint))
+    }
+
+    // MARK: - Tests - Response policy ordering
+
+    func test_sortedCustomResponsePolicies_isCaseInsensitiveAndNumericAware() {
+        let state = Factory.makeAppState(
+            customResponsePolicies: ["Zebra", "apple", "Server 10", "Server 2"].map {
+                CustomResponsePolicy(name: $0, value: .reroute())
+            }
+        )
+
+        XCTAssertEqual(
+            state.sortedCustomResponsePolicies.map(\.name),
+            ["apple", "Server 2", "Server 10", "Zebra"]
+        )
+    }
+
+    func test_liveResponsePolicies_ordersProxyFirstThenSortedCustomPolicies() {
+        let state = Factory.makeAppState(
+            customResponsePolicies: ["Zebra", "apple"].map {
+                CustomResponsePolicy(name: $0, value: .reroute())
+            }
+        )
+
+        XCTAssertEqual(
+            state.liveResponsePolicies(for: Factory.Endpoints.paymentHistoryJS).map(\.name),
+            ["Proxy Original Request", "apple", "Zebra"]
+        )
+    }
+
     // MARK: - Private Methods
 
     private func encodeAndDecode(state: AppState) throws -> AppState {

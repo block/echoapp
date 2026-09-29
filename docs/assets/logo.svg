@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="EchoApp">
+  <defs>
+    <linearGradient id="echo-blue" x1="8" y1="7" x2="56" y2="59" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#echo-blue)"/>
+  <path d="M14 17h24v7H22v5h13v7H22v5h16v7H14V17Z" fill="white"/>
+  <path d="M43 25c4 3 4 11 0 14M49 20c8 7 8 17 0 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+</svg>

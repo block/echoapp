@@ -1,0 +1,20 @@
+---
+layout: null
+permalink: /search.json
+search: false
+---
+[
+{% assign first_item = true %}
+{% for item in site.pages %}
+{% if item.search != false and item.title %}
+  {% unless first_item %},{% endunless %}
+  {
+    "title": {{ item.title | jsonify }},
+    "description": {{ item.description | default: "" | jsonify }},
+    "url": {{ item.url | relative_url | jsonify }},
+    "content": {{ item.content | strip_html | normalize_whitespace | jsonify }}
+  }
+  {% assign first_item = false %}
+{% endif %}
+{% endfor %}
+]

@@ -36,8 +36,8 @@ class EchoNetworkingInterceptorTest {
   @Before
   fun setUp() {
     mockwebserver.start(
-        InetAddress.getLocalHost(),
-        port = TEST_SERVER_PORT,
+        InetAddress.getByName(LOOPBACK_HOST),
+        port = 0,
     )
   }
 
@@ -60,7 +60,7 @@ class EchoNetworkingInterceptorTest {
               .newCall(
                   Request.Builder()
                       .url(
-                          "http://${mockwebserver.hostName}:${TEST_SERVER_PORT}/fake-path?testParam=hey")
+                          "http://$LOOPBACK_HOST:${mockwebserver.port}/fake-path?testParam=hey")
                       .header("X-Test-Request-Header", "Hello, world!")
                       .post("Fake request body".toRequestBody("text/plain".toMediaType()))
                       .build(),
@@ -102,7 +102,7 @@ class EchoNetworkingInterceptorTest {
           createOkHttpClient()
               .newCall(
                   Request.Builder()
-                      .url("http://${mockwebserver.hostName}:${TEST_SERVER_PORT}")
+                      .url("http://$LOOPBACK_HOST:${mockwebserver.port}")
                       .header(CONTENT_ENCODING_HEADER_NAME, "gzip")
                       .post(
                           "Compressed request body"
@@ -135,7 +135,7 @@ class EchoNetworkingInterceptorTest {
           createOkHttpClient(prettyPrinters = setOf(AllCapsTextPrettyPrinter))
               .newCall(
                   Request.Builder()
-                      .url("http://${mockwebserver.hostName}:${TEST_SERVER_PORT}")
+                      .url("http://$LOOPBACK_HOST:${mockwebserver.port}")
                       .header(CONTENT_TYPE_HEADER_NAME, "text/plain")
                       .post("lowercase request body".toRequestBody("text/plain".toMediaType()))
                       .build(),
@@ -165,7 +165,7 @@ class EchoNetworkingInterceptorTest {
           createOkHttpClient(maxBodyByteCount = 4)
               .newCall(
                   Request.Builder()
-                      .url("http://${mockwebserver.hostName}:${TEST_SERVER_PORT}")
+                      .url("http://$LOOPBACK_HOST:${mockwebserver.port}")
                       .post(
                           "Hello world, this is a sentence in the request body."
                               .toRequestBody("text/plain".toMediaType()),
@@ -225,9 +225,9 @@ class EchoNetworkingInterceptorTest {
   }
 
   private companion object {
+    const val LOOPBACK_HOST = "127.0.0.1"
     const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
     const val FAKE_CURRENT_TIME_MILLIS = 1_719_840_447_991L
     const val FAKE_REQUEST_ID = "fake-request-id"
-    const val TEST_SERVER_PORT = 9999
   }
 }
