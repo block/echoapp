@@ -10,6 +10,7 @@ public final class UserJourneysPlugin: ClientPlugin {
         public enum EventType: Equatable, Codable {
             case start
             case tag
+            case tagRemoved
             case variant
             case frustrationSignal
             case frictionSignal
@@ -36,6 +37,8 @@ public final class UserJourneysPlugin: ClientPlugin {
                     self = .start
                 case "tag":
                     self = .tag
+                case "tagRemoved":
+                    self = .tagRemoved
                 case "variant":
                     self = .variant
                 case "frustrationSignal":
@@ -68,6 +71,8 @@ public final class UserJourneysPlugin: ClientPlugin {
                     try container.encode("start", forKey: .type)
                 case .tag:
                     try container.encode("tag", forKey: .type)
+                case .tagRemoved:
+                    try container.encode("tagRemoved", forKey: .type)
                 case .variant:
                     try container.encode("variant", forKey: .type)
                 case .frustrationSignal:
@@ -274,6 +279,26 @@ extension UserJourneysPlugin {
             event: .init(
                 journeyName: userJourneyName,
                 eventType: .tag,
+                eventValue: tag,
+                metadata: metadata
+            )
+        )
+    }
+
+    /// Removes a tag from the journey.
+    /// - Parameters:
+    ///   - userJourneyName: The name of the journey.
+    ///   - tag: The tag to remove.
+    ///   - metadata: Additional metadata for the event.
+    public func didRemoveTag(
+        userJourneyName: String,
+        tag: String,
+        metadata: [String: String]? = nil
+    ) {
+        sendJourneyEvent(
+            event: .init(
+                journeyName: userJourneyName,
+                eventType: .tagRemoved,
                 eventValue: tag,
                 metadata: metadata
             )

@@ -166,8 +166,12 @@ run_swift_in "$release_root/Examples/SPMExample" build --scratch-path "$scratch_
 
 # App.xcodeproj is the distribution build surface. Archiving without signing is
 # intentional: signing is a release concern, not a public source prerequisite.
+# CI cannot answer Xcode's interactive macro-trust prompt, so allow the macros
+# already pinned by Package.resolved after resolving them in the isolated tree.
 run xcrun xcodebuild \
     -quiet \
+    -skipMacroValidation \
+    -onlyUsePackageVersionsFromResolvedFile \
     -project "$release_root/App/App.xcodeproj" \
     -scheme Echo \
     -configuration Release \

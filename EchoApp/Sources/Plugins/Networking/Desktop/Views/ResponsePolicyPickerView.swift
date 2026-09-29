@@ -59,10 +59,8 @@ struct ResponsePolicyPickerView: View {
     }
 
     private func makeResponsePolicyRows(for responsePolicies: [ResponsePolicy]) -> some View {
-        let sortedResponsePolicies = responsePolicies.sorted {
-            $0.name.lowercased() < $1.name.lowercased()
-        }
-        return ForEach(sortedResponsePolicies, id: \.name, content: makeResponsePolicyRow)
+        // Ordering is owned by `AppState`; render as-is.
+        ForEach(responsePolicies, id: \.name, content: makeResponsePolicyRow)
     }
 
     private func makeResponsePolicyRow(responsePolicy: ResponsePolicy) -> some View {

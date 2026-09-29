@@ -1,0 +1,46 @@
+- title: Start here
+  items:
+    - title: Overview
+      url: /
+    - title: Get started
+      url: /getting-started/
+    - title: Troubleshooting
+      url: /troubleshooting/
+
+- title: Concepts
+  items:
+    - title: Architecture
+      url: /concepts/architecture/
+    - title: Client plugins
+      url: /concepts/client-plugins/
+    - title: Desktop plugins
+      url: /concepts/desktop-plugins/
+
+- title: Integrate
+  items:
+    - title: Swift apps
+      url: /guides/integrate-swift/
+    - title: Android apps
+      url: /guides/integrate-android/
+    - title: Build a plugin
+      url: /guides/build-a-plugin/
+    - title: Develop EchoApp
+      url: /guides/develop-echoapp/
+
+- title: Tools
+  items:
+    - title: Network Monitor
+      url: /tools/network-monitor/
+    - title: Command-line interface
+      url: /tools/cli/
+    - title: MCP server
+      url: /tools/mcp/
+
+- title: Reference
+  items:
+    - title: Plugin catalog
+      url: /reference/plugins/
+    - title: Repository map
+      url: /reference/repository-map/
+    - title: Frequently asked questions
+      url: /reference/faq/

@@ -4,3 +4,7 @@
 xcuserdata/
 .DS_Store
 local.properties
+
+# Jekyll documentation output
+docs/_site/
+docs/.jekyll-cache/
